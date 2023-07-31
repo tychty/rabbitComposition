@@ -1,0 +1,24 @@
+{
+    "name": "m1",
+    "version": "1.0.0",
+    "description": "M1",
+    "author": "Madi Tastanov <tychty4@gmail.com>",
+    "main": "dist/index.js",
+    "scripts": {
+        "build": "tsc -p tsconfig.json",
+        "start": "NODE_PATH=dist/ NODE_ENV=production node ./dist/index.js"
+    },
+    "dependencies": {
+        "amqplib": "^0.10.3",
+        "fastify": "^4.20.0",
+        "pino": "^7.8.1",
+        "pino-elasticsearch": "^6.2.0",
+        "pino-multi-stream": "^6.0.0",
+        "pino-pretty": "^10.2.0"
+    },
+    "devDependencies": {
+        "@types/amqplib": "^0.10.1",
+        "@types/node": "^20.4.5",
+        "typescript": "^5.1.6"
+    }
+}

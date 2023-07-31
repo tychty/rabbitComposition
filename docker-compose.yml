@@ -1,0 +1,74 @@
+version: '3.2'
+services:
+
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    container_name: greenapi-rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    ports:
+      - '${AMQP_PORT:-15672}:15672'
+    volumes:
+      - rabbitmqdata:/var/lib/rabbitmq
+      - ./.docker/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./.docker/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
+
+  node-m1:
+    image: greenapi-node-m1
+    build:
+      context: ./m1
+      dockerfile: ../.docker/nodebase/Dockerfile
+      target: base
+      labels:
+        - "greenapi=true"
+    labels:
+      - "greenapi=true"
+    environment:
+      - LOG_LEVEL=info
+      - LOG_AGGREGATOR_URL=http://elasticsearch:9200
+      - LOG_AGGREGATOR_INDEX=${LOG_AGGREGATOR_INDEX}
+      - AMQP_URL=amqp://rabbitmq:5672
+      # - AMQP_URL=amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
+      - AMQP_QUEUE_M1_M2=${AMQP_QUEUE_M1_M2}
+      - AMQP_REPLY_QUEUE=${AMQP_REPLY_QUEUE}
+    container_name: 'greenapi-node-m1-api'
+    ports:
+      - '${M1_PORT:-3000}:3000'
+    depends_on:
+      # elasticsearch:
+      #   condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  node-m2:
+    image: greenapi-node-m2
+    build:
+      context: ./m2
+      dockerfile: ../.docker/nodebase/Dockerfile
+      target: base
+      labels:
+        - "greenapi=true"
+    labels:
+      - "greenapi=true"
+    environment:
+      - LOG_LEVEL=info
+      - LOG_AGGREGATOR_URL=http://elasticsearch:9200
+      - LOG_AGGREGATOR_INDEX=${LOG_AGGREGATOR_INDEX}
+      - AMQP_URL=amqp://rabbitmq:5672
+      # - AMQP_URL=amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
+      - AMQP_QUEUE_M1_M2=${AMQP_QUEUE_M1_M2}
+    container_name: 'greenapi-node-m2-api'
+    depends_on:
+      # elasticsearch:
+      #   condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+volumes:
+  rabbitmqdata:

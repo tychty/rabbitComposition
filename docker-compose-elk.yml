@@ -1,0 +1,32 @@
+version: '3.2'
+services:
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
+    environment:
+      - xpack.security.enabled=false
+      - discovery.type=single-node
+    container_name: greenapi-elasticsearch
+    volumes:
+      - elasticdata:/usr/share/elasticsearch/data
+    # healthcheck:
+    #   test: curl -s http://elasticsearch:9200 >/dev/null || exit 1
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 50
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.17.10
+    container_name: greenapi-kibana
+    ports:
+      - '${KIBANA_PORT:-5601}:5601'
+    depends_on:
+      - elasticsearch
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    # volumes:
+    #   - ./.docker/kibana/my-dashboards.json:/usr/share/kibana/config/my-dashboards.json
+    # working_dir: /usr/share/kibana/config
+
+volumes:
+  elasticdata:
